@@ -8,18 +8,30 @@ migrant_data$total <- migrant_data$value + migrant_data$valid_visa
 migrant_data$prop <- migrant_data$value/migrant_data$total
 migrant_data <- migrant_data[migrant_data$status_year_end == "Expired", ]
 
-sample_dat <- filter(
-  migrant_data,
-  # year_issued == 2005,
-  visa_cat_broad == "Work",
-  # visa_cat_broad == "Dep_J_A",
-  nationality == "China")
-# nationality == "Sub_Saharan_Africa")
+# initial population entering UK
+migrant_pop <-
+  migrant_data |>
+  group_by(nationality, year_issued, visa_cat_broad) |>
+  summarise(pop = first(total))
+
+save(migrant_pop, file = "data/migrant_pop.RData")
+
+
+sample_dat <-
+  filter(
+    migrant_data,
+    # year_issued == 2005,
+    visa_cat_broad == "Work",
+    # visa_cat_broad == "Dep_J_A",
+    nationality == "China")
+    # nationality == "Sub_Saharan_Africa")
 
 
 N <- sample_dat$total[1]
 
-## BUGS
+########
+# BUGS
+########
 
 jags_dat <-
   list(N = sample_dat$total,
