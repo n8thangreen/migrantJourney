@@ -82,35 +82,55 @@ out$BUGSoutput$summary
 
 R2WinBUGS::attach.bugs(out$BUGSoutput)
 
+save(out, file = "data/BUGS_output.RData")
+
 ########
 # plots
 ########
 
 library(purrr)
 
-props <- split(sample_dat$prop, jags_dat$id)
+props <- split(sample_dat$S, jags_dat$id)
+
+mean_mu <- apply(out$BUGSoutput$sims.list$mu, FUN = mean, MARGIN = c(2,3))
+mean_pi <- apply(out$BUGSoutput$sims.list$pi, FUN = mean, MARGIN = c(2,3))
+mean_sigma <- apply(out$BUGSoutput$sims.list$sigma, FUN = mean, MARGIN = c(2,3))
+
+plot(mean_pi[5,5] + (1-mean_pi[5,5])*plnorm(q = seq(0,17,1), meanlog = mean_mu[5,5], sdlog = mean_sigma[5,5], lower.tail = FALSE),
+     ylim = c(0,1), type = "l")
+
+res <- array(dim = c(16,18,5),
+             dimnames = list(year_issue = 2004:2019,
+                             year_expire = 2003:2020,
+                             nat = unique(sample_dat$nationality)))
+
+for (j in 1:5) {
+  for (i in 1:16) {
+    cf <- mean_pi[i,j]
+    S_mean <- cf + (1-cf)*plnorm(q = seq(0,17,1),
+                                 meanlog = mean_mu[i,j],
+                                 sdlog = mean_sigma[i,j],
+                                 lower.tail = FALSE)
+    res[i,,j] <- round(S_mean, 2)
+    lines(S_mean, ylim = c(0,1), type = "l", col = j)
+  }
+}
+
 
 # empirical
 plot(NA, ylim = c(0,1), xlim = c(0,18))
-map(1:17, ~lines(jags_dat$t[jags_dat$id == .], 1 - props[[.]], ylim = c(0,1), type = "l"))
+map(1:17, ~lines(jags_dat$t[jags_dat$id == .] + 1, props[[.]], ylim = c(0,1), type = "o"))
 
 for (i in 1:2000) {
   lines(pi[i] + (1-pi[i])*plnorm(q = seq(0,17,1), meanlog = mu[i], sdlog = sigma[i], lower.tail = FALSE), col = "lightgrey")
 }
 
-# hard-code
-# lines(0.699 + (1-0.699)*pexp(q = seq(0,17,1), rate = 0.152, lower.tail = FALSE), col = "blue")
-# lines(0.741 + (1-0.741)*plnorm(q = seq(0,17,1), meanlog = 1.28, sdlog = 0.608, lower.tail = FALSE), col = "red")
 
-plot(sample_dat$S[sample_dat$nationality == "Bangladesh" & sample_dat$year_issued == 2008],
-     ylim = c(0,1), xlim = c(0,18))
+# save survival fits
+save(res, file = "data/posterior_S.RData")
 
-lines(seq(1,13,1),
-  out$BUGSoutput$summary["pi[3,1]","mean"] +
-    (1-out$BUGSoutput$summary["pi[3,1]","mean"])*plnorm(q = seq(5,17,1),
-                                                   meanlog = out$BUGSoutput$summary["mu[3,1]","mean"],
-                                                   sdlog = out$BUGSoutput$summary["sigma[3,1]","mean"],
-                                                   lower.tail = FALSE), col = "red")
+
+
 
 # # predictions
 # plot(c(1, x_pred[1, ]/N), ylim = c(0,1), type = "l", col = "lightgrey")
