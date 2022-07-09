@@ -126,6 +126,22 @@ for (i in 1:2000) {
 }
 
 
+library(reshape2)
+library(ggplot2)
+library(dplyr)
+
+xx <-
+  melt(res) |>
+  mutate(grp = paste(year_issue, nat))
+
+ggplot(xx, aes(x = year_expire, y = value, group = grp, col = nat)) + geom_line() + ylim(0,1) +
+  # facet_wrap(vars(nat))
+  facet_wrap(vars(year_issue))
+
+
+
+
+
 # save survival fits
 save(res, file = "data/posterior_S.RData")
 
