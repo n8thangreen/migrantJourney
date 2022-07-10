@@ -26,17 +26,6 @@ migrant_pop <-
 
 save(migrant_pop, file = "data/migrant_pop.RData")
 
-
-sample_dat <-
-  filter(
-    migrant_data,
-    # year_issued == 2005,
-    visa_cat_broad == "Work",
-    # visa_cat_broad == "Dep_J_A",
-    # nationality == "China"
-    # nationality == "Sub_Saharan_Africa"
-  )
-
 sample_dat <-
   migrant_data |>
   group_by(nationality, year_issued, year) |>
